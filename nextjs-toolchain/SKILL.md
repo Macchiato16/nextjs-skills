@@ -118,8 +118,8 @@ Execute in order:
      "pre-commit": "pnpm lint-staged"
    },
    "lint-staged": {
-     "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
-     "*.{json,md,css}": ["prettier --write"]
+     "*.{js,jsx,ts,tsx,mjs,cjs}": ["eslint --fix", "prettier --write"],
+     "*.{json,jsonc,md,mdx,css,scss,sass,yml,yaml}": ["prettier --write"]
    }
    ```
 
@@ -170,16 +170,15 @@ Execute in order:
    import tsconfigPaths from "vite-tsconfig-paths";
 
    export default defineConfig({
-     plugins: [react(), tsconfigPaths()],
+     plugins: [tsconfigPaths(), react()],
      test: {
        environment: "jsdom",
-       globals: true,
        setupFiles: "./src/test/setup.ts",
      },
    });
    ```
 
-   Create `src/test/setup.ts`: `import '@testing-library/jest-dom'`
+   Create `src/test/setup.ts`: `import '@testing-library/jest-dom/vitest'`
 
 9. **Configure Playwright** (if selected):
 
