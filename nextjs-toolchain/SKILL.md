@@ -99,10 +99,21 @@ Execute in order:
    ```
 6. **Configure Git hooks** (based on user choice):
 
+   Install the shared staged-file tooling:
+
+   ```bash
+   pnpm add -D lint-staged
+   ```
+
    _Lightweight (simple-git-hooks):_
 
+   ```bash
+   pnpm add -D simple-git-hooks
+   ```
+
+   Add to `package.json`:
+
    ```json
-   // package.json
    "simple-git-hooks": {
      "pre-commit": "pnpm lint-staged"
    },
@@ -112,14 +123,19 @@ Execute in order:
    }
    ```
 
-   Then run: `pnpm simple-git-hooks`
+   Then run: `pnpm exec simple-git-hooks`
 
    _Standard (Husky):_
 
    ```bash
    pnpm add -D husky
    pnpm exec husky init
-   echo "pnpm lint-staged" > .husky/pre-commit
+   ```
+
+   Set `.husky/pre-commit` to:
+
+   ```bash
+   pnpm lint-staged
    ```
 
    Add lint-staged config to `package.json` same as above.
@@ -128,17 +144,22 @@ Execute in order:
 
    ```bash
    pnpm add -D @commitlint/cli @commitlint/config-conventional
-   echo "export default { extends: ['@commitlint/config-conventional'] }" > commitlint.config.mjs
+   ```
+
+   Create `commitlint.config.mjs`:
+
+   ```js
+   export default { extends: ["@commitlint/config-conventional"] };
    ```
 
    Add commit-msg hook:
    - simple-git-hooks: add `"commit-msg": "pnpm commitlint --edit $1"` to the hooks config
-   - Husky: `echo "pnpm commitlint --edit \$1" > .husky/commit-msg`
+   - Husky: create `.husky/commit-msg` with `pnpm commitlint --edit $1`
 
 8. **Configure Vitest**:
 
    ```bash
-   pnpm add -D vitest @vitejs/plugin-react @testing-library/react @testing-library/jest-dom jsdom
+   pnpm add -D vitest @vitejs/plugin-react vite-tsconfig-paths @testing-library/react @testing-library/dom @testing-library/jest-dom jsdom
    ```
 
    Create `vitest.config.ts`:
@@ -146,8 +167,10 @@ Execute in order:
    ```ts
    import { defineConfig } from "vitest/config";
    import react from "@vitejs/plugin-react";
+   import tsconfigPaths from "vite-tsconfig-paths";
+
    export default defineConfig({
-     plugins: [react()],
+     plugins: [react(), tsconfigPaths()],
      test: {
        environment: "jsdom",
        globals: true,
@@ -159,8 +182,33 @@ Execute in order:
    Create `src/test/setup.ts`: `import '@testing-library/jest-dom'`
 
 9. **Configure Playwright** (if selected):
+
    ```bash
-   pnpm create playwright
+   pnpm create playwright@latest
+   ```
+
+   Use TypeScript, place tests under `e2e`, skip GitHub Actions if this workflow already creates CI, and install browsers when prompted.
+
+   Update `playwright.config.ts` with a Next.js dev server:
+
+   ```ts
+   import { defineConfig, devices } from "@playwright/test";
+
+   export default defineConfig({
+     testDir: "./e2e",
+     use: {
+       baseURL: "http://127.0.0.1:3000",
+       trace: "on-first-retry",
+     },
+     webServer: {
+       command: "pnpm dev",
+       url: "http://127.0.0.1:3000",
+       reuseExistingServer: !process.env.CI,
+     },
+     projects: [
+       { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+     ],
+   });
    ```
 
 ### Step 3 - Verify all tools work
