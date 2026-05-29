@@ -36,6 +36,20 @@ Read only the relevant reference files for the task:
 - Pass serializable data from Server Components to Client Components. Do not pass functions, database clients, secrets, or non-serializable objects across the boundary.
 - Avoid adding global state unless local state, URL state, server data, or existing project state management is insufficient.
 
+## Data Ownership Principle
+
+- Treat server-owned data as server data even when part of the UI is interactive.
+- Fetch server-owned data on the server, then pass the smallest serializable shape needed by Client Components.
+- Do not move data fetching to the client just because a child component needs state, events, effects, or browser APIs.
+- Split the UI instead: keep data loading in a Server Component and wrap only the interactive leaf in a Client Component.
+
+## Client Data Fetching Exceptions
+
+- Client-side data fetching is allowed when the request is driven by post-render user interaction or client-only state.
+- Use client fetching for typeahead, load-more, infinite scroll, polling, realtime updates, browser-only SDKs, optimistic UI, or local client cache refreshes.
+- Do not use client fetching for initial route data, SEO-relevant content, auth-sensitive server-owned data, or shareable URL state.
+- For searchable or filterable pages, prefer URL `searchParams` plus server-side fetching when results should survive refreshes or be shareable.
+
 ## Routing And Layouts
 
 - Use nested layouts for shared UI that should persist across route transitions.
