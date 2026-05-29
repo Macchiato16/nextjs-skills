@@ -61,7 +61,7 @@ Wait for the user's answers. Do not proceed until confirmed.
 
 Execute in order:
 
-1. **Create project**: `pnpm create next-app@latest <name> --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"`
+1. **Create project**: `pnpm create next-app@latest <name> --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --use-pnpm`
 2. **Init git**: confirm git is initialized, then append any missing `.gitignore` entries (`node_modules`, `.next`, `.env*.local`, `coverage`, `playwright-report`) without overwriting generated content
 3. **Install and configure Prettier**:
    - Install: `pnpm add -D prettier prettier-plugin-tailwindcss eslint-config-prettier`
@@ -177,7 +177,7 @@ Execute in order:
    ```
 
    Add commit-msg hook:
-   - simple-git-hooks: add `"commit-msg": "pnpm commitlint --edit $1"` to the hooks config
+   - simple-git-hooks: add `"commit-msg": "pnpm commitlint --edit $1"` to the hooks config, then rerun `pnpm exec simple-git-hooks`
    - Husky: create `.husky/commit-msg` with `pnpm commitlint --edit $1`
 
 9. **Configure Playwright** (if selected):
@@ -200,7 +200,7 @@ Execute in order:
        trace: "on-first-retry",
      },
      webServer: {
-       command: "pnpm dev",
+       command: process.env.CI ? "pnpm start" : "pnpm dev",
        url: "http://127.0.0.1:3000",
        reuseExistingServer: !process.env.CI,
      },
@@ -221,21 +221,13 @@ pnpm typecheck          # TypeScript
 pnpm test               # Vitest
 ```
 
-For git hooks, make a test commit to confirm the pre-commit hook fires:
+If Playwright is configured, also run:
 
 ```bash
-git add -A
-git commit -m "test: verify hooks" --allow-empty
+pnpm test:e2e
 ```
 
-If Commitlint is configured, also verify it rejects a bad commit:
-
-```bash
-git commit -m "bad commit message" --allow-empty
-# Should fail with commitlint error
-```
-
-Fix any failures before continuing. Do not proceed to Step 4 with broken tooling.
+Fix any failures before continuing. Do not proceed to Step 4 with broken tooling. Do not create temporary verification commits before the first real commit.
 
 ### Step 4 - GitHub CI
 
@@ -294,6 +286,8 @@ Confirm the CI file looks correct with the user.
 git add -A
 git commit -m "chore: initial project setup with toolchain"
 ```
+
+Use this first commit to verify configured pre-commit and commit-msg hooks. If the commit fails, fix the hook or tool failure and retry the same first commit.
 
 Report to the user:
 
