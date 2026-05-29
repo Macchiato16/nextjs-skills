@@ -16,6 +16,17 @@ Before changing code:
 3. Inspect nearby routes, layouts, components, data access helpers, styling patterns, and tests before choosing an approach.
 4. For version-sensitive features or APIs, verify against official Next.js documentation before making claims or broad changes.
 
+## Reference Map
+
+Read only the relevant reference files for the task:
+
+- `references/app-router.md`: routes, layouts, route groups, loading/error/not-found UI, metadata, URL state
+- `references/server-client-boundaries.md`: Server Components, Client Components, `"use client"`, serializable props, providers, third-party client libraries
+- `references/data-fetching-and-caching.md`: server data fetching, static vs dynamic rendering, revalidation, cache invalidation
+- `references/mutations-and-route-handlers.md`: forms, Server Actions, mutations, Route Handlers, API endpoints, webhooks
+- `references/performance-and-seo.md`: images, fonts, metadata, scripts, bundle size, loading UX
+- `references/testing.md`: Vitest, React Testing Library, Playwright, server/client boundary tests
+
 ## Default Architecture
 
 - Prefer App Router conventions for new work unless the existing project uses Pages Router.
