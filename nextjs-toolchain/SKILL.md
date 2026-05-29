@@ -257,7 +257,7 @@ jobs:
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm test # only if Vitest configured
+      - run: pnpm test
       - run: pnpm build
 ```
 
