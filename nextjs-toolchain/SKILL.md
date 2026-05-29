@@ -299,53 +299,14 @@ Report to the user:
 
 ## Existing Project Workflow
 
-### Step 1 - Audit current state
-
-Read `package.json`, existing config files, and directory structure. Identify:
-
-- Which tools are already configured
-- Which are missing
-- Which are outdated or misconfigured (e.g., ESLint v8 with `.eslintrc` instead of v9 flat config)
-
-Present a clear table:
-
-```
-Current toolchain state:
-
-  Configured: TypeScript, ESLint (v8, legacy config)
-  Missing:    Prettier, Git hooks, tests, CI
-  Suggested replacement: ESLint v8 -> v9 flat config
-```
-
-### Step 2 - Discuss and confirm plan
-
-Ask the same three questions (git hooks, commit convention, testing) as for new projects.
-
-If any existing config files would be overwritten, explicitly ask:
-
-```
-Detected an existing .eslintrc.json. I will replace it with an ESLint v9 flat config (eslint.config.mjs).
-Should I continue?
-```
-
-Wait for confirmation before touching existing files.
-
-### Step 3 - Implement
-
-Apply only the changes confirmed in Step 2. Follow the same configuration steps as the new project workflow for each tool being added or updated.
-
-Run the same verification suite after all changes are applied.
-
-### Step 4 - Report
-
-Summarize what was changed, added, or skipped. List all available scripts.
+For requests involving an existing Next.js project, read `references/existing-project-workflow.md` before auditing or changing the toolchain.
 
 ---
 
 ## Important Notes
 
-- Always use pnpm, not npm or yarn, for all install commands
+- Use pnpm for new projects; for existing projects, detect the current package manager and ask before migrating to pnpm
 - ESLint v9 uses flat config (`eslint.config.mjs`); never create `.eslintrc` files
 - `eslint-config-prettier` must always be last in the ESLint config to avoid conflicts with Prettier
-- For git hook verification, use `--allow-empty` commits so there are no staged file requirements
+- Do not create temporary verification commits; use the first real commit to verify configured hooks
 - If `create-next-app` generated an ESLint config, adjust that file instead of replacing it from scratch
