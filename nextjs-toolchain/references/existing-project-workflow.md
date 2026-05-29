@@ -4,6 +4,8 @@ Use this workflow when configuring or improving the toolchain for an existing Ne
 
 ## Step 1 - Audit current state
 
+Run `git status --short` first. If there are existing user changes, work around them and do not overwrite them.
+
 Read `package.json`, existing config files, and directory structure. Identify:
 
 - Current package manager and lockfiles (`pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lockb`)
@@ -33,6 +35,19 @@ Preserve existing tools that are configured and working. Ask only about missing 
 
 If the project is not already using pnpm, explicitly ask before migrating package managers. Do not mix package managers or leave multiple lockfiles unless the user confirms the migration plan.
 
+Before asking for final confirmation, present a concrete plan:
+
+```
+Proposed changes:
+
+  Keep:      TypeScript, Jest
+  Add:       Prettier, lint-staged
+  Replace:   ESLint legacy config -> ESLint v9 flat config
+  Files:     package.json, eslint.config.mjs, .prettierrc
+  Commands:  <package-manager> add -D ...
+  Verify:    existing lint/test/build scripts plus new format check
+```
+
 If any existing config files need to be replaced rather than merged, explicitly ask:
 
 ```
@@ -46,13 +61,15 @@ Wait for confirmation before touching existing files.
 
 Apply only the changes confirmed in Step 2. Reuse the relevant tool configuration patterns from the new project workflow, but never run the scaffold step and never overwrite existing files blindly.
 
+Use the project's current package manager for install and run commands unless the user explicitly confirmed a migration to pnpm.
+
 Merge or patch existing files where possible:
 
 - Add missing scripts without removing existing scripts
 - Preserve custom ESLint, Prettier, Vitest, Playwright, and CI settings unless they conflict with the confirmed plan
 - Update hook configuration in place, then reinstall hooks if the selected hook tool requires it
 
-Run the project's existing verification commands plus the verification commands for tools added or modified in this change.
+Run the project's existing standard verification commands first (for example, its current `lint`, `test`, and `build` scripts), then run the verification commands for tools added or modified in this change.
 
 ## Step 4 - Report
 
