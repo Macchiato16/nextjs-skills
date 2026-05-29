@@ -97,7 +97,31 @@ Execute in order:
      "test:e2e": "playwright test"
    }
    ```
-6. **Configure Git hooks** (based on user choice):
+6. **Configure Vitest**:
+
+   ```bash
+   pnpm add -D vitest @vitejs/plugin-react vite-tsconfig-paths @testing-library/react @testing-library/dom @testing-library/jest-dom jsdom
+   ```
+
+   Create `vitest.config.ts`:
+
+   ```ts
+   import { defineConfig } from "vitest/config";
+   import react from "@vitejs/plugin-react";
+   import tsconfigPaths from "vite-tsconfig-paths";
+
+   export default defineConfig({
+     plugins: [tsconfigPaths(), react()],
+     test: {
+       environment: "jsdom",
+       setupFiles: "./src/test/setup.ts",
+     },
+   });
+   ```
+
+   Create `src/test/setup.ts`: `import '@testing-library/jest-dom/vitest'`
+
+7. **Configure Git hooks** (based on user choice):
 
    Install the shared staged-file tooling:
 
@@ -140,7 +164,7 @@ Execute in order:
 
    Add lint-staged config to `package.json` same as above.
 
-7. **Configure Commitlint** (if selected):
+8. **Configure Commitlint** (if selected):
 
    ```bash
    pnpm add -D @commitlint/cli @commitlint/config-conventional
@@ -155,30 +179,6 @@ Execute in order:
    Add commit-msg hook:
    - simple-git-hooks: add `"commit-msg": "pnpm commitlint --edit $1"` to the hooks config
    - Husky: create `.husky/commit-msg` with `pnpm commitlint --edit $1`
-
-8. **Configure Vitest**:
-
-   ```bash
-   pnpm add -D vitest @vitejs/plugin-react vite-tsconfig-paths @testing-library/react @testing-library/dom @testing-library/jest-dom jsdom
-   ```
-
-   Create `vitest.config.ts`:
-
-   ```ts
-   import { defineConfig } from "vitest/config";
-   import react from "@vitejs/plugin-react";
-   import tsconfigPaths from "vite-tsconfig-paths";
-
-   export default defineConfig({
-     plugins: [tsconfigPaths(), react()],
-     test: {
-       environment: "jsdom",
-       setupFiles: "./src/test/setup.ts",
-     },
-   });
-   ```
-
-   Create `src/test/setup.ts`: `import '@testing-library/jest-dom/vitest'`
 
 9. **Configure Playwright** (if selected):
 
@@ -297,10 +297,9 @@ git commit -m "chore: initial project setup with toolchain"
 
 Report to the user:
 
-- Project name and location
-- Tools configured (with versions)
-- Scripts available (`pnpm lint`, `pnpm test`, etc.)
-- CI workflow file location
+- Project tool configuration status
+- CI configuration status
+- Whether each verification command passed
 
 ---
 
