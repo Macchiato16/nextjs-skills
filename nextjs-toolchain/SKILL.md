@@ -1,0 +1,307 @@
+---
+name: nextjs-toolchain
+description: "Use when creating a new Next.js project or configuring the toolchain for an existing one. Triggers on: 'create a Next.js project', 'configure the Next.js toolchain', or any request to set up or improve engineering tools (formatter, linter, type checking, testing, git hooks, CI) in a Next.js project."
+---
+
+# Next.js Toolchain Setup
+
+Configure a production-grade engineering toolchain for Next.js projects, either from scratch or by filling gaps in an existing project.
+
+## Fixed Tool Selections
+
+These are already decided. Present them to the user without asking:
+
+| Category        | Tool                    |
+| --------------- | ----------------------- |
+| Package manager | pnpm                    |
+| Formatter       | Prettier                |
+| Linter          | ESLint v9 (flat config) |
+| Type checking   | `tsc --noEmit`          |
+
+## User-Selected Tools (ask once, upfront)
+
+Ask the user to choose one option per category before doing any work:
+
+| Category          | Lightweight                    | Standard                          |
+| ----------------- | ------------------------------ | --------------------------------- |
+| Git hooks         | simple-git-hooks + lint-staged | Husky + lint-staged               |
+| Commit convention | None                           | Commitlint + Conventional Commits |
+| Testing           | Vitest (unit only)             | Vitest + Playwright (unit + E2E)  |
+
+The user may also override any fixed selection; if they prefer Biome over ESLint+Prettier, respect that.
+
+---
+
+## New Project Workflow
+
+### Step 1 - Confirm toolchain before touching anything
+
+Before running any commands, present the full toolchain to the user:
+
+```
+I am preparing to configure the following toolchain for the new Next.js project:
+
+Confirmed selections:
+  Package manager: pnpm
+  Formatter:       Prettier
+  Linter:          ESLint v9
+  Type checking:   tsc --noEmit
+
+Please choose:
+  Git hooks: lightweight (simple-git-hooks) or standard (Husky)?
+  Commit convention: none, or Commitlint + Conventional Commits?
+  Testing: unit tests only (Vitest), or unit + E2E tests (Vitest + Playwright)?
+
+After you confirm the choices, I will create the project.
+```
+
+Wait for the user's answers. Do not proceed until confirmed.
+
+### Step 2 - Scaffold and configure
+
+Execute in order:
+
+1. **Create project**: `pnpm create next-app@latest <name> --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"`
+2. **Init git**: `git init` then create `.gitignore` (include `node_modules`, `.next`, `.env*.local`, `coverage`, `playwright-report`)
+3. **Install and configure Prettier**:
+   - Install: `pnpm add -D prettier eslint-config-prettier`
+   - Create `.prettierrc` (if the project uses Tailwind CSS, add `prettier-plugin-tailwindcss` to the plugins array — otherwise omit it):
+     ```json
+     {
+       "semi": false,
+       "singleQuote": true,
+       "tabWidth": 2,
+       "trailingComma": "all",
+       "printWidth": 100,
+       "plugins": ["prettier-plugin-tailwindcss"]
+     }
+     ```
+   - Create `.prettierignore`: `.next`, `node_modules`, `pnpm-lock.yaml`
+4. **Configure ESLint v9** (flat config `eslint.config.mjs`):
+   - Use `@eslint/js`, `typescript-eslint`, `eslint-config-next`
+   - Add `eslint-config-prettier` last to disable formatting rules
+5. **Add scripts to `package.json`**:
+   ```json
+   "scripts": {
+     "lint": "next lint",
+     "lint:fix": "next lint --fix",
+     "format": "prettier --write .",
+     "format:check": "prettier --check .",
+     "type-check": "tsc --noEmit",
+     "test": "vitest run",
+     "test:watch": "vitest",
+     "test:e2e": "playwright test"
+   }
+   ```
+6. **Configure Git hooks** (based on user choice):
+
+   _Lightweight (simple-git-hooks):_
+
+   ```json
+   // package.json
+   "simple-git-hooks": {
+     "pre-commit": "pnpm lint-staged"
+   },
+   "lint-staged": {
+     "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
+     "*.{json,md,css}": ["prettier --write"]
+   }
+   ```
+
+   Then run: `pnpm simple-git-hooks`
+
+   _Standard (Husky):_
+
+   ```bash
+   pnpm add -D husky
+   pnpm exec husky init
+   echo "pnpm lint-staged" > .husky/pre-commit
+   ```
+
+   Add lint-staged config to `package.json` same as above.
+
+7. **Configure Commitlint** (if selected):
+
+   ```bash
+   pnpm add -D @commitlint/cli @commitlint/config-conventional
+   echo "export default { extends: ['@commitlint/config-conventional'] }" > commitlint.config.mjs
+   ```
+
+   Add commit-msg hook:
+   - simple-git-hooks: add `"commit-msg": "pnpm commitlint --edit $1"` to the hooks config
+   - Husky: `echo "pnpm commitlint --edit \$1" > .husky/commit-msg`
+
+8. **Configure Vitest**:
+
+   ```bash
+   pnpm add -D vitest @vitejs/plugin-react @testing-library/react @testing-library/jest-dom jsdom
+   ```
+
+   Create `vitest.config.ts`:
+
+   ```ts
+   import { defineConfig } from "vitest/config";
+   import react from "@vitejs/plugin-react";
+   export default defineConfig({
+     plugins: [react()],
+     test: {
+       environment: "jsdom",
+       globals: true,
+       setupFiles: "./src/test/setup.ts",
+     },
+   });
+   ```
+
+   Create `src/test/setup.ts`: `import '@testing-library/jest-dom'`
+
+9. **Configure Playwright** (if selected):
+   ```bash
+   pnpm create playwright
+   ```
+
+### Step 3 - Verify all tools work
+
+Run each check and confirm it passes before moving on:
+
+```bash
+pnpm format:check       # Prettier
+pnpm lint               # ESLint
+pnpm type-check         # TypeScript
+pnpm test               # Vitest
+```
+
+For git hooks, make a test commit to confirm the pre-commit hook fires:
+
+```bash
+git add -A
+git commit -m "test: verify hooks" --allow-empty
+```
+
+If Commitlint is configured, also verify it rejects a bad commit:
+
+```bash
+git commit -m "bad commit message" --allow-empty
+# Should fail with commitlint error
+```
+
+Fix any failures before continuing. Do not proceed to Step 4 with broken tooling.
+
+### Step 4 - GitHub CI
+
+Create `.github/workflows/ci.yml`. Include jobs based on configured tools:
+
+```yaml
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm type-check
+      - run: pnpm test # only if Vitest configured
+      - run: pnpm build
+```
+
+If Playwright is configured, add a separate `e2e` job that runs after `ci`:
+
+```yaml
+e2e:
+  needs: ci
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: pnpm/action-setup@v4
+    - uses: actions/setup-node@v4
+      with: { node-version: 20, cache: pnpm }
+    - run: pnpm install --frozen-lockfile
+    - run: pnpm exec playwright install --with-deps
+    - run: pnpm exec next build
+    - run: pnpm test:e2e
+```
+
+Confirm the CI file looks correct with the user.
+
+### Step 5 - First commit
+
+```bash
+git add -A
+git commit -m "chore: initial project setup with toolchain"
+```
+
+Report to the user:
+
+- Project name and location
+- Tools configured (with versions)
+- Scripts available (`pnpm lint`, `pnpm test`, etc.)
+- CI workflow file location
+
+---
+
+## Existing Project Workflow
+
+### Step 1 - Audit current state
+
+Read `package.json`, existing config files, and directory structure. Identify:
+
+- Which tools are already configured
+- Which are missing
+- Which are outdated or misconfigured (e.g., ESLint v8 with `.eslintrc` instead of v9 flat config)
+
+Present a clear table:
+
+```
+Current toolchain state:
+
+  Configured: TypeScript, ESLint (v8, legacy config)
+  Missing:    Prettier, Git hooks, tests, CI
+  Suggested replacement: ESLint v8 -> v9 flat config
+```
+
+### Step 2 - Discuss and confirm plan
+
+Ask the same three questions (git hooks, commit convention, testing) as for new projects.
+
+If any existing config files would be overwritten, explicitly ask:
+
+```
+Detected an existing .eslintrc.json. I will replace it with an ESLint v9 flat config (eslint.config.mjs).
+Should I continue?
+```
+
+Wait for confirmation before touching existing files.
+
+### Step 3 - Implement
+
+Apply only the changes confirmed in Step 2. Follow the same configuration steps as the new project workflow for each tool being added or updated.
+
+Run the same verification suite after all changes are applied.
+
+### Step 4 - Report
+
+Summarize what was changed, added, or skipped. List all available scripts.
+
+---
+
+## Important Notes
+
+- Always use pnpm, not npm or yarn, for all install commands
+- ESLint v9 uses flat config (`eslint.config.mjs`); never create `.eslintrc` files
+- `eslint-config-prettier` must always be last in the ESLint config to avoid conflicts with Prettier
+- For git hook verification, use `--allow-empty` commits so there are no staged file requirements
+- If the user's Next.js version already includes a tool (e.g., next lint includes ESLint), configure it rather than re-installing
