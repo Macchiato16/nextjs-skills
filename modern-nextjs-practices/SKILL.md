@@ -60,7 +60,7 @@ Read only the relevant reference files for the task:
 
 ## Data Fetching And Caching
 
-- Fetch server-owned data in Server Components, Route Handlers, or server-side helpers by default.
+- Choose the server-side data access point based on cache, auth, and mutation boundaries: Server Component, Route Handler, Server Action, or server helper.
 - Fetch from the database or internal services directly on the server when possible. Do not add an internal HTTP API layer just so a Server Component can call it.
 - Make caching behavior explicit when it matters. Use the project's established patterns for `fetch` cache options, revalidation, tags, or dynamic rendering.
 - Avoid stale data bugs by documenting why a route is static, revalidated, or dynamic when the choice is not obvious.
@@ -107,7 +107,6 @@ Read only the relevant reference files for the task:
 ## Avoid
 
 - Do not default to `"use client"` at the top of pages, layouts, or large feature trees.
-- Do not fetch server-owned data from Client Components unless interactivity or polling requires it.
 - Do not introduce API routes for purely internal server-to-server calls.
 - Do not hide dynamic rendering, cache invalidation, or auth assumptions.
 - Do not replace working project architecture just to match a generic best-practice checklist.
