@@ -100,7 +100,7 @@ Execute in order:
 6. **Configure Vitest**:
 
    ```bash
-   pnpm add -D vitest @vitejs/plugin-react vite-tsconfig-paths @testing-library/react @testing-library/dom @testing-library/jest-dom jsdom
+   pnpm add -D vitest @vitejs/plugin-react @testing-library/react @testing-library/dom @testing-library/jest-dom jsdom
    ```
 
    Create `vitest.config.ts`:
@@ -108,10 +108,12 @@ Execute in order:
    ```ts
    import { defineConfig } from "vitest/config";
    import react from "@vitejs/plugin-react";
-   import tsconfigPaths from "vite-tsconfig-paths";
 
    export default defineConfig({
-     plugins: [tsconfigPaths(), react()],
+     plugins: [react()],
+     resolve: {
+       tsconfigPaths: true,
+     },
      test: {
        environment: "jsdom",
        setupFiles: "./src/test/setup.ts",
