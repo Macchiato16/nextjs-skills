@@ -100,8 +100,10 @@ Execute in order:
 6. **Configure Vitest**:
 
    ```bash
-   pnpm add -D vitest @vitejs/plugin-react @testing-library/react @testing-library/dom @testing-library/jest-dom jsdom
+   pnpm add -D vitest @vitejs/plugin-react@^5.2.0 @testing-library/react @testing-library/dom @testing-library/jest-dom jsdom
    ```
+
+   Pin `@vitejs/plugin-react` to v5 unless the project already uses Vite 8 and satisfies the v6 peer dependency set. v5.2 supports Vite 4-8 and avoids v6's stricter peer requirements.
 
    Create `vitest.config.ts`:
 
